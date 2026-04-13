@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Heart Lyric</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<div class="container">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <img src="HEART LYRICS.png" alt="Lyrics Hub Logo" class="logo" />
+        <h1>Heart<span style="color:#2a16c9;">Lyric</span></h1>
+        <p>All your favourite songs here</p>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        
+        <div class="search-section">
+            <form id="searchForm" class="search-box">
+                <input type="text" placeholder="Search lyrics..." id="searchBox">
+                <button type="submit">🔍</button>
+            </form>
+
+        <div id="results"></div>
+</div>
+
+        <!-- 🔐 Upload Section (hidden) -->
+        <div class="upload-section" id="uploadSection" style="display:none;">
+            <h3>Add Song</h3>
+
+            <input type="text" id="newTitle" placeholder="Song title">
+            <input type="text" id="newArtist" placeholder="Artist">
+            <input type="text" id="newCover" placeholder="Album cover image URL">
+            <textarea id="newLyrics" placeholder="Paste lyrics here..."></textarea>
+
+            <button onclick="addSong()">Upload</button>
+        </div>
+
+        <!-- 🎵 Song Display -->
+        <div class="song-card">
+            <h2 id="songTitle">Music Music</h2>
+            <h3 id="artist">Education</h3>
+            <pre id="lyrics">The value of song as a means of education should never be lost sight of. Let there be singing in the home, of songs that are sweet and pure, and there will be fewer words of censure and more of cheerfulness and hope and joy.</pre>
+        </div>
+
+        <!-- 🎶 Latest Music Section -->
+        <div class="latest-music-section">
+            <h2>🎶 Latest Music</h2>
+            <div id="latestMusicContainer" class="music-grid">
+                <!-- Latest songs will be displayed here -->
+            </div>
+        </div>
+
+    </main>
+
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
