@@ -1,6 +1,8 @@
 const express = require('express');
 const mysql = require('mysql2');
 const cors = require('cors');
+const multer = require('multer');
+const path = require('path');
 
 const app = express();
 const port = 3000;
@@ -8,6 +10,20 @@ const port = 3000;
 // Middleware
 app.use(cors());
 app.use(express.json());
+app.use('/uploads', express.static('uploads'));
+
+// Multer config for file uploads
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, 'uploads/');
+    },
+    filename: (req, file, cb) => {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        cb(null, uniqueSuffix + path.extname(file.originalname));
+    }
+});
+
+const upload = multer({ storage: storage });
 
 // Database connection
 const db = mysql.createConnection({
@@ -34,17 +50,36 @@ app.get('/songs', (req, res) => {
     });
 });
 
-app.post("/add-song", (req, res) => {
-    const { title, artist, lyrics, cover, password } = req.body;
+app.post("/add-song", upload.single('cover'), (req, res) => {
+    const { title, artist, lyrics, password, country } = req.body;
+    const cover = req.file ? `/uploads/${req.file.filename}` : null;
 
     if (password !== "1234") {
         return res.status(403).json({ message: "Unauthorized" });
     }
 
-    const sql = "INSERT INTO songs (title, artist, lyrics, cover) VALUES (?, ?, ?, ?)";
-    db.query(sql, [title, artist, lyrics, cover], (err, result) => {
+    const sql = "INSERT INTO songs (title, artist, lyrics, cover, country) VALUES (?, ?, ?, ?, ?)";
+    db.query(sql, [title, artist, lyrics, cover, country], (err, result) => {
         if (err) return res.status(500).json(err);
         res.json({ message: "Song saved!" });
+    });
+});
+
+app.get('/comments/:songId', (req, res) => {
+    const songId = req.params.songId;
+    const sql = "SELECT * FROM comments WHERE song_id = ? ORDER BY created_at DESC";
+    db.query(sql, [songId], (err, results) => {
+        if (err) return res.status(500).json(err);
+        res.json(results);
+    });
+});
+
+app.post('/add-comment', (req, res) => {
+    const { songId, userName, comment } = req.body;
+    const sql = "INSERT INTO comments (song_id, user_name, comment) VALUES (?, ?, ?)";
+    db.query(sql, [songId, userName, comment], (err, result) => {
+        if (err) return res.status(500).json(err);
+        res.json({ message: "Comment added!" });
     });
 });
 

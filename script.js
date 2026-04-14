@@ -13,6 +13,75 @@ const form = document.getElementById("searchForm");
 
 let isAdmin = false;
 let debounceTimer;
+let recentSongs = [];
+let currentSongId = null;
+
+// Update Now Playing widget
+function updateNowPlaying(title, artist, cover) {
+    const content = document.getElementById("nowPlayingContent");
+    content.innerHTML = `
+        <img src="${cover || 'https://via.placeholder.com/60'}" alt="Cover" style="width:60px; height:60px; border-radius:8px; margin-bottom:8px; display:block;">
+        <strong>${title}</strong><br>
+        <small>${artist}</small>
+    `;
+}
+
+// Add to recent songs
+function addToRecent(title, artist, cover) {
+    // Remove if already exists
+    recentSongs = recentSongs.filter(song => song.title !== title || song.artist !== artist);
+    // Add to front
+    recentSongs.unshift({ title, artist, cover });
+    // Limit to 5
+    if (recentSongs.length > 5) recentSongs.pop();
+    updateRecentViewed();
+}
+
+// Update Recent Viewed widget
+function updateRecentViewed() {
+    const container = document.getElementById("recentViewedList");
+    container.innerHTML = "";
+    recentSongs.forEach(song => {
+        const li = document.createElement("li");
+        li.innerHTML = `<strong>${song.title}</strong> - ${song.artist}`;
+        li.addEventListener("click", () => {
+            songTitle.textContent = song.title;
+            artist.textContent = song.artist;
+            lyrics.textContent = song.lyrics;
+            updateNowPlaying(song.title, song.artist, song.cover);
+            window.scrollTo(0, 0);
+        });
+        container.appendChild(li);
+    });
+}
+
+// Load comments for a song
+async function loadComments(songId) {
+    const res = await fetch(`http://localhost:3000/comments/${songId}`);
+    const comments = await res.json();
+    const container = document.getElementById("commentsList");
+    container.innerHTML = "";
+    comments.forEach(comment => {
+        const div = document.createElement("div");
+        div.classList.add("comment");
+        div.innerHTML = `
+            <div class="comment-user">${comment.user_name}</div>
+            <div class="comment-text">${comment.comment}</div>
+            <div class="comment-date">${new Date(comment.created_at).toLocaleString()}</div>
+        `;
+        container.appendChild(div);
+    });
+}
+
+// Post a comment
+async function postComment(songId, userName, comment) {
+    await fetch("http://localhost:3000/add-comment", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ songId, userName, comment })
+    });
+    loadComments(songId);
+}
 
 // 🔐 Hidden admin (Ctrl + Shift + A)
 document.addEventListener("keydown", (e) => {
@@ -42,7 +111,7 @@ async function loadSongs() {
         });
 
         // Display latest music after loading
-        displayLatestMusic();
+        displayAllSongs();
     } catch (error) {
         console.error("Failed to load songs:", error);
     }
@@ -95,6 +164,12 @@ async function performSearch() {
             songTitle.textContent = song.title;
             artist.textContent = song.artist;
             lyrics.textContent = song.lyrics;
+            resultsDiv.innerHTML = "";
+            updateNowPlaying(song.title, song.artist, song.cover);
+            addToRecent(song.title, song.artist, song.cover);
+            currentSongId = song.id;
+            loadComments(song.id);
+            document.getElementById('commentsSection').style.display = 'block';
         });
 
         resultsDiv.appendChild(div);
@@ -119,6 +194,10 @@ async function performSearch() {
 
         div.addEventListener("click", () => {
             fetchLyrics(song.artist.name, song.title);
+            resultsDiv.innerHTML = "";
+            updateNowPlaying(song.title, song.artist.name, song.album.cover_small);
+            addToRecent(song.title, song.artist.name, song.album.cover_small);
+            document.getElementById('commentsSection').style.display = 'none';
         });
 
         resultsDiv.appendChild(div);
@@ -133,12 +212,24 @@ async function performSearch() {
 searchBox.addEventListener("input", () => {
     clearTimeout(debounceTimer);
     debounceTimer = setTimeout(performSearch, 400);
+
+    if (searchBox.value.trim() === "") {
+        resultsDiv.innerHTML = "";
+    }
 });
 
 // ⏎ Enter
 form.addEventListener("submit", (e) => {
     e.preventDefault();
     performSearch();
+});
+
+// 📱 Click outside to hide dropdown
+document.addEventListener("click", (e) => {
+    const searchSection = document.querySelector(".search-section");
+    if (!searchSection.contains(e.target)) {
+        resultsDiv.innerHTML = "";
+    }
 });
 
 // ➕ Add song
@@ -148,12 +239,22 @@ async function addSong() {
     const title = document.getElementById("newTitle").value;
     const artist = document.getElementById("newArtist").value;
     const lyrics = document.getElementById("newLyrics").value;
-    const cover = document.getElementById("newCover").value;
+    const coverFile = document.getElementById("newCover").files[0];
+    const country = document.getElementById("newCountry").value;
+
+    const formData = new FormData();
+    formData.append('title', title);
+    formData.append('artist', artist);
+    formData.append('lyrics', lyrics);
+    formData.append('country', country);
+    formData.append('password', '1234');
+    if (coverFile) {
+        formData.append('cover', coverFile);
+    }
 
     await fetch("http://localhost:3000/add-song", {
         method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({ title, artist, lyrics, cover, password: "1234" })
+        body: formData
     });
 
     alert("Song saved!");
@@ -167,7 +268,13 @@ async function fetchLyrics(artistName, songTitleText) {
     const res = await fetch(`https://api.lyrics.ovh/v1/${artistName}/${songTitleText}`);
     const data = await res.json();
 
-    lyrics.textContent = data.lyrics || "Not found";
+    if (data.lyrics) {
+        lyrics.textContent = data.lyrics;
+    } else {
+        lyrics.textContent = "Lyrics not available.";
+        window.open('data:text/html,<html><body><h1>Song not found</h1><p>The lyrics for "' + songTitleText + '" by ' + artistName + ' could not be found.</p></body></html>', '_blank');
+    }
+    resultsDiv.innerHTML = "";
 }
 
 // 🌐 API suggestions
@@ -177,11 +284,14 @@ async function fetchSuggestions(query) {
     return data.data.slice(0, 5);
 }
 
-// 🎶 Display Latest Music
-function displayLatestMusic() {
+// 🎶 Display All Songs
+function displayAllSongs() {
     const container = document.getElementById("latestMusicContainer");
+    const title = document.querySelector("#latestMusicContainer").previousElementSibling;
+    title.textContent = "🎶 Latest Music";
     
-    songs.forEach(song => {
+    container.innerHTML = "";
+    songs.slice(0, 4).forEach(song => {
         const card = document.createElement("div");
         card.classList.add("music-card");
         
@@ -195,12 +305,81 @@ function displayLatestMusic() {
             songTitle.textContent = song.title;
             artist.textContent = song.artist;
             lyrics.textContent = song.lyrics;
+            updateNowPlaying(song.title, song.artist, song.cover);
+            addToRecent(song.title, song.artist, song.cover);
             window.scrollTo(0, 0);
+            currentSongId = song.id;
+            loadComments(song.id);
+            document.getElementById('commentsSection').style.display = 'block';
         });
         
         container.appendChild(card);
     });
 }
 
-// Load on page startup
-// window.addEventListener("DOMContentLoaded", displayLatestMusic);
+// 🎶 Display Filtered Songs
+function displayFilteredSongs(filteredSongs, filterName) {
+    const container = document.getElementById("latestMusicContainer");
+    const title = document.querySelector("#latestMusicContainer").previousElementSibling;
+    title.textContent = `🎶 Songs from ${filterName}`;
+    
+    container.innerHTML = "";
+    filteredSongs.slice(0, 4).forEach(song => {
+        const card = document.createElement("div");
+        card.classList.add("music-card");
+        
+        card.innerHTML = `
+            <img src="${song.cover || 'https://via.placeholder.com/120'}" alt="${song.title}">
+            <div class="card-title">${song.title}</div>
+            <div class="card-artist">${song.artist}</div>
+        `;
+        
+        card.addEventListener("click", () => {
+            songTitle.textContent = song.title;
+            artist.textContent = song.artist;
+            lyrics.textContent = song.lyrics;
+            updateNowPlaying(song.title, song.artist, song.cover);
+            addToRecent(song.title, song.artist, song.cover);
+            window.scrollTo(0, 0);
+            currentSongId = song.id;
+            loadComments(song.id);
+            document.getElementById('commentsSection').style.display = 'block';
+        });
+        
+        container.appendChild(card);
+    });
+}
+
+// Make sidebar items clickable
+document.addEventListener("DOMContentLoaded", () => {
+    document.querySelectorAll('.right-sidebar .widget h3').forEach(h3 => {
+        const ul = h3.nextElementSibling;
+        if (ul && ul.tagName === 'UL') {
+            ul.querySelectorAll('li').forEach(li => {
+                li.style.cursor = 'pointer';
+                li.addEventListener('click', () => {
+                    if (h3.textContent === 'Countries') {
+                        const country = li.textContent;
+                        const filteredSongs = songs.filter(song => song.country === country);
+                        displayFilteredSongs(filteredSongs, country);
+                    } else {
+                        searchBox.value = li.textContent;
+                        performSearch();
+                    }
+                });
+            });
+        }
+    });
+
+    // Comment form
+    document.getElementById('commentForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const userName = document.getElementById('commentUser').value;
+        const comment = document.getElementById('commentText').value;
+        if (currentSongId && userName && comment) {
+            postComment(currentSongId, userName, comment);
+            document.getElementById('commentUser').value = '';
+            document.getElementById('commentText').value = '';
+        }
+    });
+});

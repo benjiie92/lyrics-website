@@ -4,7 +4,9 @@
     <meta charset="UTF-8">
     <title>Heart Lyric</title>
     <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
 </head>
+<img src="bg.jpg" alt="background" class="background" />
 
 <body>
 
@@ -23,7 +25,7 @@
         <div class="search-section">
             <form id="searchForm" class="search-box">
                 <input type="text" placeholder="Search lyrics..." id="searchBox">
-                <button type="submit">🔍</button>
+                <button type="submit">Search</button>
             </form>
 
         <div id="results"></div>
@@ -35,7 +37,8 @@
 
             <input type="text" id="newTitle" placeholder="Song title">
             <input type="text" id="newArtist" placeholder="Artist">
-            <input type="text" id="newCover" placeholder="Album cover image URL">
+            <input type="file" id="newCover" accept="image/*" placeholder="Album cover image">
+            <input type="text" id="newCountry" placeholder="Country">
             <textarea id="newLyrics" placeholder="Paste lyrics here..."></textarea>
 
             <button onclick="addSong()">Upload</button>
@@ -48,6 +51,28 @@
             <pre id="lyrics">The value of song as a means of education should never be lost sight of. Let there be singing in the home, of songs that are sweet and pure, and there will be fewer words of censure and more of cheerfulness and hope and joy.</pre>
         </div>
 
+        <!-- 💬 Comments Section -->
+        <div class="comments-section" id="commentsSection" style="display:none;">
+            <h3>💬 Comments</h3>
+            <div id="commentsList"></div>
+            <form id="commentForm">
+                <input type="text" id="commentUser" placeholder="Your name" required>
+                <textarea id="commentText" placeholder="Add a comment..." required></textarea>
+                <button type="submit">Post Comment</button>
+            </form>
+        </div>
+
+        <!-- 💬 Comments Section -->
+        <div class="comments-section" id="commentsSection" style="display:none;">
+            <h3>💬 Comments</h3>
+            <div id="commentsList"></div>
+            <form id="commentForm">
+                <input type="text" id="commentUser" placeholder="Your name" required>
+                <textarea id="commentText" placeholder="Add a comment..." required></textarea>
+                <button type="submit">Post Comment</button>
+            </form>
+        </div>
+
         <!-- 🎶 Latest Music Section -->
         <div class="latest-music-section">
             <h2>🎶 Latest Music</h2>
@@ -57,6 +82,42 @@
         </div>
 
     </main>
+
+    <aside class="right-sidebar">
+        <h2>Discover</h2>
+
+        <div class="widget">
+            <h3>Now Playing</h3>
+            <div id="nowPlayingContent">
+                <p>Select a song to see it here.</p>
+            </div>
+        </div>
+
+        <div class="widget">
+            <h3>Trending Artists</h3>
+            <ul>
+                <li>Shower Power</li>
+                <li>Jehovah Shalom</li>
+                <li>Fountainview Academy</li>
+            </ul>
+        </div>
+
+        <div class="widget">
+            <h3>Countries</h3>
+            <ul>
+                <li>USA</li>
+                <li>Zimbabwe</li>
+                <li>Zambia</li>
+            </ul>
+        </div>
+
+        <div class="widget">
+            <h3>Recently Viewed</h3>
+            <ul id="recentViewedList">
+                <!-- Recent songs will be listed here -->
+            </ul>
+        </div>
+    </aside>
 
 </div>
 
