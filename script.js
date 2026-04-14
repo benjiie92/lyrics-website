@@ -322,18 +322,22 @@ function displayFilteredSongs(filteredSongs, filterName) {
     const container = document.getElementById("latestMusicContainer");
     const title = document.querySelector("#latestMusicContainer").previousElementSibling;
     title.textContent = `🎶 Songs from ${filterName}`;
-    
+
     container.innerHTML = "";
+    if (filteredSongs.length === 0) {
+        container.innerHTML = `<p style="color:#ccc; padding: 20px;">No songs found for ${filterName}.</p>`;
+        return;
+    }
     filteredSongs.slice(0, 4).forEach(song => {
         const card = document.createElement("div");
         card.classList.add("music-card");
-        
+
         card.innerHTML = `
             <img src="${song.cover || 'https://via.placeholder.com/120'}" alt="${song.title}">
             <div class="card-title">${song.title}</div>
             <div class="card-artist">${song.artist}</div>
         `;
-        
+
         card.addEventListener("click", () => {
             songTitle.textContent = song.title;
             artist.textContent = song.artist;
@@ -345,34 +349,36 @@ function displayFilteredSongs(filteredSongs, filterName) {
             loadComments(song.id);
             document.getElementById('commentsSection').style.display = 'block';
         });
-        
+
         container.appendChild(card);
     });
 }
 
-// Make sidebar items clickable
-document.addEventListener("DOMContentLoaded", () => {
+function bindSidebarClicks() {
     document.querySelectorAll('.right-sidebar .widget h3').forEach(h3 => {
         const ul = h3.nextElementSibling;
         if (ul && ul.tagName === 'UL') {
             ul.querySelectorAll('li').forEach(li => {
                 li.style.cursor = 'pointer';
                 li.addEventListener('click', () => {
-                    if (h3.textContent === 'Countries') {
-                        const country = li.textContent;
-                        const filteredSongs = songs.filter(song => song.country === country);
+                    if (h3.textContent.trim() === 'Countries') {
+                        const country = li.textContent.trim();
+                        const filteredSongs = songs.filter(song => (song.country || '').trim().toLowerCase() === country.toLowerCase());
                         displayFilteredSongs(filteredSongs, country);
                     } else {
-                        searchBox.value = li.textContent;
+                        searchBox.value = li.textContent.trim();
                         performSearch();
                     }
                 });
             });
         }
     });
+}
 
-    // Comment form
-    document.getElementById('commentForm').addEventListener('submit', (e) => {
+// Comment form
+const commentForm = document.getElementById('commentForm');
+if (commentForm) {
+    commentForm.addEventListener('submit', (e) => {
         e.preventDefault();
         const userName = document.getElementById('commentUser').value;
         const comment = document.getElementById('commentText').value;
@@ -382,4 +388,6 @@ document.addEventListener("DOMContentLoaded", () => {
             document.getElementById('commentText').value = '';
         }
     });
-});
+}
+
+bindSidebarClicks();
