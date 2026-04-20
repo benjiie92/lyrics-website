@@ -51,15 +51,15 @@ app.get('/songs', (req, res) => {
 });
 
 app.post("/add-song", upload.single('cover'), (req, res) => {
-    const { title, artist, lyrics, password, country } = req.body;
+    const { title, artist, lyrics, password, country, album } = req.body;
     const cover = req.file ? `/uploads/${req.file.filename}` : null;
 
     if (password !== "1234") {
         return res.status(403).json({ message: "Unauthorized" });
     }
 
-    const sql = "INSERT INTO songs (title, artist, lyrics, cover, country) VALUES (?, ?, ?, ?, ?)";
-    db.query(sql, [title, artist, lyrics, cover, country], (err, result) => {
+    const sql = "INSERT INTO songs (title, artist, lyrics, cover, country, album) VALUES (?, ?, ?, ?, ?, ?)";
+    db.query(sql, [title, artist, lyrics, cover, country, album], (err, result) => {
         if (err) return res.status(500).json(err);
         res.json({ message: "Song saved!" });
     });

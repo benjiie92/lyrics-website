@@ -27,11 +27,11 @@ function updateNowPlaying(title, artist, cover) {
 }
 
 // Add to recent songs
-function addToRecent(title, artist, cover) {
+function addToRecent(title, artist, cover, album) {
     // Remove if already exists
     recentSongs = recentSongs.filter(song => song.title !== title || song.artist !== artist);
     // Add to front
-    recentSongs.unshift({ title, artist, cover });
+    recentSongs.unshift({ title, artist, cover, album });
     // Limit to 5
     if (recentSongs.length > 5) recentSongs.pop();
     updateRecentViewed();
@@ -49,6 +49,47 @@ function updateRecentViewed() {
             artist.textContent = song.artist;
             lyrics.textContent = song.lyrics;
             updateNowPlaying(song.title, song.artist, song.cover);
+            displayAlbumSuggestions(song.album);
+            window.scrollTo(0, 0);
+        });
+        container.appendChild(li);
+    });
+}
+
+// Display songs from the same album
+function displayAlbumSuggestions(albumName) {
+    const container = document.getElementById("albumSuggestionsList");
+    container.innerHTML = "";
+    
+    if (!albumName) {
+        container.innerHTML = "<li style='color: #999;'>No album info</li>";
+        return;
+    }
+    
+    const albumSongs = songs.filter(song => 
+        (song.album || '').trim().toLowerCase() === albumName.trim().toLowerCase() &&
+        song.album // Only show if album is not empty
+    );
+    
+    if (albumSongs.length === 0) {
+        container.innerHTML = "<li style='color: #999;'>No other songs</li>";
+        return;
+    }
+    
+    albumSongs.forEach(song => {
+        const li = document.createElement("li");
+        li.innerHTML = `<strong>${song.title}</strong> - ${song.artist}`;
+        li.style.cursor = 'pointer';
+        li.addEventListener("click", () => {
+            songTitle.textContent = song.title;
+            artist.textContent = song.artist;
+            lyrics.textContent = song.lyrics;
+            updateNowPlaying(song.title, song.artist, song.cover);
+            addToRecent(song.title, song.artist, song.cover, song.album);
+            displayAlbumSuggestions(song.album);
+            currentSongId = song.id;
+            loadComments(song.id);
+            document.getElementById('commentsSection').style.display = 'block';
             window.scrollTo(0, 0);
         });
         container.appendChild(li);
@@ -166,7 +207,8 @@ async function performSearch() {
             lyrics.textContent = song.lyrics;
             resultsDiv.innerHTML = "";
             updateNowPlaying(song.title, song.artist, song.cover);
-            addToRecent(song.title, song.artist, song.cover);
+            addToRecent(song.title, song.artist, song.cover, song.album);
+            displayAlbumSuggestions(song.album);
             currentSongId = song.id;
             loadComments(song.id);
             document.getElementById('commentsSection').style.display = 'block';
@@ -193,10 +235,14 @@ async function performSearch() {
         `;
 
         div.addEventListener("click", () => {
+            songTitle.textContent = song.title;
+            artist.textContent = song.artist.name;
+            currentSongId = null;
             fetchLyrics(song.artist.name, song.title);
             resultsDiv.innerHTML = "";
             updateNowPlaying(song.title, song.artist.name, song.album.cover_small);
-            addToRecent(song.title, song.artist.name, song.album.cover_small);
+            addToRecent(song.title, song.artist.name, song.album.cover_small, song.album.name);
+            displayAlbumSuggestions(null);
             document.getElementById('commentsSection').style.display = 'none';
         });
 
@@ -241,12 +287,14 @@ async function addSong() {
     const lyrics = document.getElementById("newLyrics").value;
     const coverFile = document.getElementById("newCover").files[0];
     const country = document.getElementById("newCountry").value;
+    const album = document.getElementById("newAlbum").value;
 
     const formData = new FormData();
     formData.append('title', title);
     formData.append('artist', artist);
     formData.append('lyrics', lyrics);
     formData.append('country', country);
+    formData.append('album', album);
     formData.append('password', '1234');
     if (coverFile) {
         formData.append('cover', coverFile);
@@ -263,6 +311,8 @@ async function addSong() {
 
 // 🎵 Fetch lyrics
 async function fetchLyrics(artistName, songTitleText) {
+    songTitle.textContent = songTitleText;
+    artist.textContent = artistName;
     lyrics.textContent = "Loading...";
 
     const res = await fetch(`https://api.lyrics.ovh/v1/${artistName}/${songTitleText}`);
@@ -306,7 +356,8 @@ function displayAllSongs() {
             artist.textContent = song.artist;
             lyrics.textContent = song.lyrics;
             updateNowPlaying(song.title, song.artist, song.cover);
-            addToRecent(song.title, song.artist, song.cover);
+            addToRecent(song.title, song.artist, song.cover, song.album);
+            displayAlbumSuggestions(song.album);
             window.scrollTo(0, 0);
             currentSongId = song.id;
             loadComments(song.id);
@@ -343,7 +394,8 @@ function displayFilteredSongs(filteredSongs, filterName) {
             artist.textContent = song.artist;
             lyrics.textContent = song.lyrics;
             updateNowPlaying(song.title, song.artist, song.cover);
-            addToRecent(song.title, song.artist, song.cover);
+            addToRecent(song.title, song.artist, song.cover, song.album);
+            displayAlbumSuggestions(song.album);
             window.scrollTo(0, 0);
             currentSongId = song.id;
             loadComments(song.id);
