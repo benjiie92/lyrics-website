@@ -9,7 +9,7 @@ const port = process.env.PORT || 3000;
 
 // Middleware
 const corsOptions = {
-    origin: process.env.CLIENT_URL || 'http://localhost:3000',
+    origin: process.env.CLIENT_URL || "*",
     credentials: true,
     optionsSuccessStatus: 200
 };

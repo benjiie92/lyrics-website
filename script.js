@@ -98,7 +98,7 @@ function displayAlbumSuggestions(albumName) {
 
 // Load comments for a song
 async function loadComments(songId) {
-    const res = await fetch(`http://localhost:3000/comments/${songId}`);
+    const res = await fetch(`lyrics-website-production.up.railway.app/${songId}`);
     const comments = await res.json();
     const container = document.getElementById("commentsList");
     container.innerHTML = "";
@@ -116,7 +116,7 @@ async function loadComments(songId) {
 
 // Post a comment
 async function postComment(songId, userName, comment) {
-    await fetch("http://localhost:3000/add-comment", {
+    await fetch("lyrics-website-production.up.railway.app/add-comment", {
         method: "POST",
         headers: {"Content-Type": "application/json"},
         body: JSON.stringify({ songId, userName, comment })
@@ -142,7 +142,7 @@ document.addEventListener("keydown", (e) => {
 // 🔄 Load songs
 async function loadSongs() {
     try {
-        const res = await fetch("http://localhost:3000/songs");
+        const res = await fetch("lyrics-website-production.up.railway.app/songs");
         const data = await res.json();
 
         songs.length = 0;
@@ -300,7 +300,7 @@ async function addSong() {
         formData.append('cover', coverFile);
     }
 
-    await fetch("http://localhost:3000/add-song", {
+    await fetch("lyrics-website-production.up.railway.app/add-song", {
         method: "POST",
         body: formData
     });
