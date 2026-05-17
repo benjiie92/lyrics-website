@@ -41,52 +41,51 @@ loadSongs();
 async function performSearch() {
     if (!searchBox || !resultsDiv) return;
 
-    const query = searchBox.value.toLowerCase().trim();
+    const query = searchBox.value.trim();
     resultsDiv.innerHTML = "";
 
     if (!query) return;
 
-    let hasResults = false;
+    try {
+        const res = await fetch(`${BASE_URL}/search?q=${encodeURIComponent(query)}`);
+        const searchResults = await res.json();
 
-    const localSongs = songs.filter(song =>
-        song.title.toLowerCase().includes(query)
-    );
+        if (!Array.isArray(searchResults) || searchResults.length === 0) {
+            resultsDiv.innerHTML = "<p>No songs found 😔</p>";
+            return;
+        }
 
-    resultsDiv.innerHTML = "";
+        searchResults.forEach(song => {
+            const div = document.createElement("div");
+            div.classList.add("result-item");
 
-    localSongs.forEach(song => {
-        hasResults = true;
-
-        const div = document.createElement("div");
-        div.classList.add("result-item");
-
-        div.innerHTML = `
-            <div class="result-content">
-                <img src="${song.cover || 'https://via.placeholder.com/40'}" />
-                <div>
-                    <strong>${song.title}</strong>
-                    <small>${song.artist}</small>
+            div.innerHTML = `
+                <div class="result-content">
+                    <img src="${song.cover || 'https://via.placeholder.com/40'}" alt="${song.title} cover" />
+                    <div>
+                        <strong>${song.title}</strong>
+                        <small>${song.artist}</small>
+                    </div>
                 </div>
-            </div>
-        `;
+            `;
 
-        div.addEventListener("click", () => {
-            if (!songTitle || !artist || !lyrics) return;
+            div.addEventListener("click", () => {
+                if (!songTitle || !artist || !lyrics) return;
 
-            songTitle.textContent = song.title;
-            artist.textContent = song.artist;
-            lyrics.textContent = song.lyrics;
-            resultsDiv.innerHTML = "";
+                songTitle.textContent = song.title;
+                artist.textContent = song.artist;
+                lyrics.textContent = song.lyrics;
+                resultsDiv.innerHTML = "";
 
-            currentSongId = song.id;
-            loadComments(song.id);
+                currentSongId = song.id;
+                loadComments(song.id);
+            });
+
+            resultsDiv.appendChild(div);
         });
-
-        resultsDiv.appendChild(div);
-    });
-
-    if (!hasResults) {
-        resultsDiv.innerHTML = "<p>No songs found 😔</p>";
+    } catch (error) {
+        console.error("❌ Search failed:", error);
+        resultsDiv.innerHTML = "<p>Search error. Please try again.</p>";
     }
 }
 

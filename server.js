@@ -93,6 +93,25 @@ app.get('/songs', (req, res) => {
     });
 });
 
+app.get('/search', (req, res) => {
+    const query = (req.query.q || '').trim();
+    if (!query) {
+        return res.json([]);
+    }
+
+    const searchTerm = `%${query}%`;
+    const sql = `SELECT * FROM songs WHERE title LIKE ? OR artist LIKE ? OR album LIKE ? OR country LIKE ? ORDER BY id DESC`;
+    db.query(sql, [searchTerm, searchTerm, searchTerm, searchTerm], (err, results) => {
+        if (err) {
+            console.error('Database error:', err);
+            const payload = { message: 'Failed to search songs' };
+            if (debug) payload.error = err.message;
+            return res.status(500).json(payload);
+        }
+        res.json(results);
+    });
+});
+
 app.post("/add-song", upload.single('cover'), (req, res) => {
     const { title, artist, lyrics, password, country, album } = req.body;
     const cover = req.file ? `/uploads/${req.file.filename}` : null;
