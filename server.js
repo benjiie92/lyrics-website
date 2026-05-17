@@ -34,6 +34,7 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage });
 
 // Database connection
+const debug = process.env.NODE_ENV !== 'production';
 const databaseUrl = process.env.DATABASE_URL;
 const dbConfig = databaseUrl ? (() => {
     try {
@@ -57,12 +58,23 @@ const dbConfig = databaseUrl ? (() => {
     port: process.env.MYSQLPORT ? Number(process.env.MYSQLPORT) : 3306
 };
 
+if (!dbConfig.host || !dbConfig.user || !dbConfig.database) {
+    console.error('Missing database configuration. Set DATABASE_URL or MYSQLHOST, MYSQLUSER, MYSQLPASSWORD, MYSQLDATABASE.');
+    process.exit(1);
+}
+
+console.log('Database config:', {
+    host: dbConfig.host,
+    database: dbConfig.database,
+    port: dbConfig.port
+});
+
 const db = mysql.createConnection(dbConfig);
 
 db.connect((err) => {
     if (err) {
         console.error('Database connection failed:', err);
-        return;
+        process.exit(1);
     }
     console.log('Connected to MySQL database');
 });
@@ -73,7 +85,9 @@ app.get('/songs', (req, res) => {
     db.query(sql, (err, results) => {
         if (err) {
             console.error('Database error:', err);
-            return res.status(500).json({ message: "Failed to retrieve songs" });
+            const payload = { message: "Failed to retrieve songs" };
+            if (debug) payload.error = err.message;
+            return res.status(500).json(payload);
         }
         res.json(results);
     });
