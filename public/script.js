@@ -140,23 +140,35 @@ async function addSong() {
     const artistName = document.getElementById("newArtist").value;
     const lyricsText = document.getElementById("newLyrics").value;
     const coverFile = document.getElementById("newCover").files[0];
+    const password = document.getElementById("adminPassword") ? document.getElementById("adminPassword").value : '';
 
     const formData = new FormData();
     formData.append('title', title);
     formData.append('artist', artistName);
     formData.append('lyrics', lyricsText);
+    formData.append('password', password);
 
     if (coverFile) {
         formData.append('cover', coverFile);
     }
 
-    await fetch(`${BASE_URL}/add-song`, {
-        method: "POST",
-        body: formData
-    });
+    try {
+        const response = await fetch(`${BASE_URL}/add-song`, {
+            method: "POST",
+            body: formData
+        });
+        const result = await response.json();
 
-    alert("Song saved!");
-    loadSongs();
+        if (!response.ok) {
+            return alert(result.message || "Failed to save song");
+        }
+
+        alert("Song saved!");
+        loadSongs();
+    } catch (err) {
+        console.error('Upload error:', err);
+        alert('Failed to upload song');
+    }
 }
 
 // 🎶 Display songs
