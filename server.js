@@ -3,6 +3,7 @@ const mysql = require('mysql2');
 const cors = require('cors');
 const multer = require('multer');
 const path = require('path');
+const { URL } = require('url');
 require('dotenv').config();
 
 const app = express();
@@ -33,13 +34,30 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage });
 
 // Database connection
-const db = mysql.createConnection({
+const databaseUrl = process.env.DATABASE_URL;
+const dbConfig = databaseUrl ? (() => {
+    try {
+        const url = new URL(databaseUrl);
+        return {
+            host: url.hostname,
+            user: url.username,
+            password: url.password,
+            database: url.pathname.replace(/^\//, ''),
+            port: Number(url.port) || 3306
+        };
+    } catch (error) {
+        console.error('Invalid DATABASE_URL:', error);
+        return {};
+    }
+})() : {
     host: process.env.MYSQLHOST,
     user: process.env.MYSQLUSER,
     password: process.env.MYSQLPASSWORD,
     database: process.env.MYSQLDATABASE,
-    port: process.env.MYSQLPORT
-});
+    port: process.env.MYSQLPORT ? Number(process.env.MYSQLPORT) : 3306
+};
+
+const db = mysql.createConnection(dbConfig);
 
 db.connect((err) => {
     if (err) {
