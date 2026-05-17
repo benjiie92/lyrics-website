@@ -8,9 +8,15 @@ const app = express();
 const port = 3000;
 
 // Middleware
-app.use(cors());
+const corsOptions = {
+    origin: process.env.CLIENT_URL || 'http://localhost:3000',
+    credentials: true,
+    optionsSuccessStatus: 200
+};
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use('/uploads', express.static('uploads'));
+app.use(express.static("public"));
 
 // Multer config for file uploads
 const storage = multer.diskStorage({
@@ -27,10 +33,10 @@ const upload = multer({ storage: storage });
 
 // Database connection
 const db = mysql.createConnection({
-    host: 'localhost',
-    user: 'root',
-    password: 'imbwA.@100',
-    database: 'lyrics_app'
+    host: process.env.DB_HOST || 'localhost',
+    user: process.env.DB_USER || 'root',
+    password: process.env.DB_PASSWORD || '',
+    database: process.env.DB_NAME || 'lyrics_app'
 });
 
 db.connect((err) => {
@@ -45,7 +51,10 @@ db.connect((err) => {
 app.get('/songs', (req, res) => {
     const sql = "SELECT * FROM songs ORDER BY id DESC";
     db.query(sql, (err, results) => {
-        if (err) return res.status(500).json(err);
+        if (err) {
+            console.error('Database error:', err);
+            return res.status(500).json({ message: "Failed to retrieve songs" });
+        }
         res.json(results);
     });
 });
@@ -54,13 +63,17 @@ app.post("/add-song", upload.single('cover'), (req, res) => {
     const { title, artist, lyrics, password, country, album } = req.body;
     const cover = req.file ? `/uploads/${req.file.filename}` : null;
 
-    if (password !== "1234") {
+    const adminPassword = process.env.ADMIN_PASSWORD || '1234';
+    if (password !== adminPassword) {
         return res.status(403).json({ message: "Unauthorized" });
     }
 
     const sql = "INSERT INTO songs (title, artist, lyrics, cover, country, album) VALUES (?, ?, ?, ?, ?, ?)";
     db.query(sql, [title, artist, lyrics, cover, country, album], (err, result) => {
-        if (err) return res.status(500).json(err);
+        if (err) {
+            console.error('Database error:', err);
+            return res.status(500).json({ message: "Failed to save song" });
+        }
         res.json({ message: "Song saved!" });
     });
 });
@@ -69,7 +82,10 @@ app.get('/comments/:songId', (req, res) => {
     const songId = req.params.songId;
     const sql = "SELECT * FROM comments WHERE song_id = ? ORDER BY created_at DESC";
     db.query(sql, [songId], (err, results) => {
-        if (err) return res.status(500).json(err);
+        if (err) {
+            console.error('Database error:', err);
+            return res.status(500).json({ message: "Failed to retrieve comments" });
+        }
         res.json(results);
     });
 });
@@ -78,7 +94,10 @@ app.post('/add-comment', (req, res) => {
     const { songId, userName, comment } = req.body;
     const sql = "INSERT INTO comments (song_id, user_name, comment) VALUES (?, ?, ?)";
     db.query(sql, [songId, userName, comment], (err, result) => {
-        if (err) return res.status(500).json(err);
+        if (err) {
+            console.error('Database error:', err);
+            return res.status(500).json({ message: "Failed to add comment" });
+        }
         res.json({ message: "Comment added!" });
     });
 });
