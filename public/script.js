@@ -180,8 +180,11 @@ function displayAllSongs() {
 
     songs.forEach(song => {
         const card = document.createElement("div");
+        card.classList.add("music-card");
         card.innerHTML = `
-            <p><strong>${song.title}</strong> - ${song.artist}</p>
+            <img src="${song.cover || 'https://via.placeholder.com/300'}" alt="${song.title} cover" onerror="this.src='https://via.placeholder.com/300'" />
+            <div class="card-title">${song.title}</div>
+            <div class="card-artist">${song.artist}</div>
         `;
 
         card.addEventListener("click", () => {
