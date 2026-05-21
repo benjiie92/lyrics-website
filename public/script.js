@@ -1,7 +1,7 @@
 console.log("JS is working");
 
 // ✅ Set this in public/index.html or replace with your Railway backend URL
-let BASE_URL = window.API_BASE_URL || "";
+let BASE_URL = window.API_BASE_URL || "https://lyrics-website-production.up.railway.app";
 BASE_URL = BASE_URL.replace(/\/+$/, '');
 console.log('BASE_URL:', BASE_URL);
 
