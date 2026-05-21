@@ -3,6 +3,10 @@ console.log("JS is working");
 // ✅ Set this in public/index.html or replace with your Railway backend URL
 const BASE_URL = window.API_BASE_URL || "";
 
+if (!BASE_URL) {
+    console.error("API_BASE_URL is not configured. Set window.API_BASE_URL in public/index.html to your Railway backend URL.");
+}
+
 // 🔹 Songs from DB
 let songs = [];
 
