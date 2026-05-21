@@ -1,7 +1,7 @@
 console.log("JS is working");
 
-// ✅ Use SAME origin (no hardcoding)
-const BASE_URL = "";
+// ✅ Set this in public/index.html or replace with your Railway backend URL
+const BASE_URL = window.API_BASE_URL || "";
 
 // 🔹 Songs from DB
 let songs = [];
