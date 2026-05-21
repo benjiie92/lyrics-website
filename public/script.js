@@ -1,10 +1,16 @@
 console.log("JS is working");
 
 // ✅ Set this in public/index.html or replace with your Railway backend URL
-const BASE_URL = window.API_BASE_URL || "";
+let BASE_URL = window.API_BASE_URL || "";
+BASE_URL = BASE_URL.replace(/\/+$/, '');
+console.log('BASE_URL:', BASE_URL);
 
 if (!BASE_URL) {
     console.error("API_BASE_URL is not configured. Set window.API_BASE_URL in public/index.html to your Railway backend URL.");
+    const resultsDiv = document.getElementById("results");
+    if (resultsDiv) {
+        resultsDiv.innerHTML = "<p style='color: #ffb3b3; padding: 20px;'>API_BASE_URL is missing. Set the Railway backend URL in public/index.html.</p>";
+    }
 }
 
 // 🔹 Songs from DB
@@ -38,11 +44,14 @@ async function loadSongs() {
 }
 
 // Load immediately
-loadSongs();
+if (BASE_URL) {
+    loadSongs();
+}
 
 
 // 🔍 Search
 async function performSearch() {
+    if (!BASE_URL) return;
     if (!searchBox || !resultsDiv) return;
 
     const query = searchBox.value.trim();
@@ -115,6 +124,7 @@ if (form) {
 
 // 📦 Load comments
 async function loadComments(songId) {
+    if (!BASE_URL) return;
     try {
         const res = await fetch(`${BASE_URL}/comments/${songId}`);
         const comments = await res.json();
@@ -137,6 +147,7 @@ async function loadComments(songId) {
 
 // ➕ Add song
 async function addSong() {
+    if (!BASE_URL) return alert("API_BASE_URL is not configured. Set window.API_BASE_URL in public/index.html.");
     if (!isAdmin) return alert("Unauthorized");
 
     const title = document.getElementById("newTitle").value;
