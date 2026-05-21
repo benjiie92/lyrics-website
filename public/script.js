@@ -1,17 +1,8 @@
 console.log("JS is working");
 
-// ✅ Set this in public/index.html or replace with your Railway backend URL
-let BASE_URL = window.API_BASE_URL || "https://lyrics-website-production.up.railway.app";
-BASE_URL = BASE_URL.replace(/\/+$/, '');
+// ✅ Railway backend URL
+const BASE_URL = "https://lyrics-website-production.up.railway.app";
 console.log('BASE_URL:', BASE_URL);
-
-if (!BASE_URL) {
-    console.error("API_BASE_URL is not configured. Set window.API_BASE_URL in public/index.html to your Railway backend URL.");
-    const resultsDiv = document.getElementById("results");
-    if (resultsDiv) {
-        resultsDiv.innerHTML = "<p style='color: #ffb3b3; padding: 20px;'>API_BASE_URL is missing. Set the Railway backend URL in public/index.html.</p>";
-    }
-}
 
 // 🔹 Songs from DB
 let songs = [];
