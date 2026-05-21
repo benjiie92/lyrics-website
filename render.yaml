@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: lyrics-website
+    env: node
+    plan: free
+    branch: main
+    buildCommand: npm install
+    startCommand: npm start
+    disk:
+      name: uploads
+      mountPath: /uploads
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        value: ""
+      - key: ADMIN_PASSWORD
+        value: "1234"
+      - key: CLIENT_URL
+        value: ""
+      - key: UPLOAD_PATH
+        value: "/uploads"

@@ -1,4 +1,5 @@
 const express = require('express');
+const fs = require('fs');
 const mysql = require('mysql2');
 const cors = require('cors');
 const multer = require('multer');
@@ -8,6 +9,11 @@ require('dotenv').config();
 
 const app = express();
 const port = process.env.PORT || 3000;
+const uploadPath = process.env.UPLOAD_PATH || 'uploads';
+
+if (!fs.existsSync(uploadPath)) {
+    fs.mkdirSync(uploadPath, { recursive: true });
+}
 
 // Middleware
 const corsOptions = {
@@ -17,13 +23,13 @@ const corsOptions = {
 };
 app.use(cors(corsOptions));
 app.use(express.json());
-app.use('/uploads', express.static('uploads'));
+app.use('/uploads', express.static(uploadPath));
 app.use(express.static("public"));
 
 // Multer config for file uploads
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        cb(null, 'uploads/');
+        cb(null, uploadPath);
     },
     filename: (req, file, cb) => {
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
